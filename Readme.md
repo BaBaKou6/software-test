@@ -1,3 +1,7 @@
+A simple project build with Django
+
+
+
 cd project 
 
 python manage.py makemigrations app
