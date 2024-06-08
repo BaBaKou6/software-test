@@ -4,6 +4,12 @@ A simple project build with Django
 
 cd project 
 
+python manage.py createsuperuser
+
+superuser
+admin
+admin
+
 python manage.py makemigrations app
 
 python manage.py migrate
