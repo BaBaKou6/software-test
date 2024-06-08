@@ -1,5 +1,6 @@
 from random import choice
 from django.db import models
+from traitlets import default
 
 # Create your models here.
 
@@ -19,8 +20,8 @@ class User(models.Model):
     score = models.IntegerField()
     level = models.IntegerField()
     
-    created = models.DateField(auto_now=True)
-    last_modified = models.DateField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True, blank=True)
+    last_modified = models.DateTimeField(auto_now=True)
     
     class Meta:
         verbose_name = "用户"
@@ -29,8 +30,8 @@ class User(models.Model):
         
 class Task(models.Model):
     class TaskStage(models.TextChoices):
-        init = "male"
-        doing = "female"
+        init = "init"
+        doing = "doing"
         finished = "finished"
         cancelled = "cancelled"
         
@@ -40,8 +41,8 @@ class Task(models.Model):
     score = models.IntegerField()
     
       
-    created = models.DateField(auto_now=True)
-    last_modified = models.DateField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True, blank=True)
+    last_modified = models.DateTimeField(auto_now=True)
     
     class Meta:
         verbose_name = "任务"
