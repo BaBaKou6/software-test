@@ -19,7 +19,7 @@ class User(models.Model):
     score = models.IntegerField()
     level = models.IntegerField()
     
-    created = models.DateField()
+    created = models.DateField(auto_now=True)
     last_modified = models.DateField(auto_now=True)
     
     class Meta:
@@ -40,7 +40,7 @@ class Task(models.Model):
     score = models.IntegerField()
     
       
-    created = models.DateField()
+    created = models.DateField(auto_now=True)
     last_modified = models.DateField(auto_now=True)
     
     class Meta:
