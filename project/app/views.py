@@ -106,9 +106,11 @@ def task(request):
         return JsonResponse({"status": 400, "data": {}, "msg": "missing stage or score"}, status=400)
     
     # API 6  仅将客户端可更新的属性列入白名单；
+    # API 8  对客户端提供的数据、或其他来自集成系统的数据进行验证、过滤和清理
     if not Task.TaskStage.validStage(stage):
         return JsonResponse({"status": 400, "data": {}, "msg": "invalid stage"}, status=400)
     # API 6  仅将客户端可更新的属性列入白名单；
+    # API 8  对客户端提供的数据、或其他来自集成系统的数据进行验证、过滤和清理
     if score < 0:
         return JsonResponse({"status": 400, "data": {}, "msg": "invalid score"}, status=400)
     
@@ -126,6 +128,7 @@ def task(request):
     except Task.DoesNotExist:
         # Check user's score before creating a new task
         # API 6  仅将客户端可更新的属性列入白名单；
+        # API 8  对客户端提供的数据、或其他来自集成系统的数据进行验证、过滤和清理
         if app_user.score < score:
             return JsonResponse({"status": 403, "data": {}, "msg": "user doesn't have enough score"}, status=403)
         
