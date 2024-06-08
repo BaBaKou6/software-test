@@ -67,7 +67,11 @@ def index(request):
 # http://127.0.0.1:8000/api/task/create-or-update
 @csrf_exempt
 def task(request):
+    # API7 为了防止异常追踪和其他有价值的信息被传回攻击者，如果可以，定义和强制使用统一的API响应格式，包括错误信息；
+    # 统一返回格式json {"status": 405, "data": {}, "msg": "method not allowed"}
+    
     if request.method != 'POST':
+        # API7 确定API只能被特定HTTP方法访问，其他的HTTP方法访问都应该被禁止（如，POST方法）
         return JsonResponse({"status": 405, "data": {}, "msg": "method not allowed"}, status=405)
     
     try:
@@ -75,6 +79,7 @@ def task(request):
     except json.JSONDecodeError:
         return JsonResponse({"status": 400, "data": {}, "msg": "invalid JSON"}, status=400)
 
+    # logined_in user
     user = request.user
     
     # API5 失效的功能级授权 检查用户是否有权限执行此操作
@@ -83,17 +88,20 @@ def task(request):
         return JsonResponse({"status": 403, "data": {}, "msg": "user does not have permission"}, status=403)
 
     
-    user_id = data.get('user_id')
+    
     task_id = data.get('task_id', 0)
     
     try:
-        user = User.objects.get(id=user_id)
+        # app user
+        app_user = User.objects.get(username=user.username)
     except User.DoesNotExist:
         return JsonResponse({"status": 404, "data": {}, "msg": "user not found"}, status=404)
-   
+    
+    user_id = app_user.id
     stage = data.get("stage")
     score = data.get("score")
     
+    print(stage)
     if stage is None or score is None:
         return JsonResponse({"status": 400, "data": {}, "msg": "missing stage or score"}, status=400)
     
@@ -112,19 +120,19 @@ def task(request):
             task.stage = stage
             
             if stage == Task.TaskStage.finished:
-                user.credit += score
-                user.save()
+                app_user.credit += score
+                app_user.save()
             task.save()
     except Task.DoesNotExist:
         # Check user's score before creating a new task
         # API 6  仅将客户端可更新的属性列入白名单；
-        if user.score < score:
+        if app_user.score < score:
             return JsonResponse({"status": 403, "data": {}, "msg": "user doesn't have enough score"}, status=403)
         
         # Create a new task within a transaction
         with transaction.atomic():
-            user.score -= score
-            user.save()
+            app_user.score -= score
+            app_user.save()
 
             task = Task(
                 name=data.get("name", ""),
