@@ -97,10 +97,18 @@ def task(request):
     if stage is None or score is None:
         return JsonResponse({"status": 400, "data": {}, "msg": "missing stage or score"}, status=400)
     
+    # API 6  仅将客户端可更新的属性列入白名单；
+    if not Task.TaskStage.validStage(stage):
+        return JsonResponse({"status": 400, "data": {}, "msg": "invalid stage"}, status=400)
+    # API 6  仅将客户端可更新的属性列入白名单；
+    if score < 0:
+        return JsonResponse({"status": 400, "data": {}, "msg": "invalid score"}, status=400)
+    
     try:
         task = Task.objects.get(id=task_id)
-        # Update task
+        # Update a exites task
         if task:
+            # API 6  仅将客户端可更新的属性列入白名单；
             task.stage = stage
             
             if stage == Task.TaskStage.finished:
@@ -109,8 +117,9 @@ def task(request):
             task.save()
     except Task.DoesNotExist:
         # Check user's score before creating a new task
+        # API 6  仅将客户端可更新的属性列入白名单；
         if user.score < score:
-            return JsonResponse({"status": 403, "data": {}, "msg": "user not enough score"}, status=403)
+            return JsonResponse({"status": 403, "data": {}, "msg": "user doesn't have enough score"}, status=403)
         
         # Create a new task within a transaction
         with transaction.atomic():

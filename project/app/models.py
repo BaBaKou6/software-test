@@ -35,6 +35,10 @@ class Task(models.Model):
         finished = "finished"
         cancelled = "cancelled"
         
+        @classmethod
+        def validStage(self, stage):            
+            return stage in [_.value for _ in list(self)]
+        
     name = models.CharField(max_length=64)
     user_id = models.IntegerField()
     stage = models.CharField(max_length = 32, choices=TaskStage)
