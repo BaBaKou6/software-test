@@ -7,6 +7,7 @@ from django.db import transaction
 from app.models import Task, User
 import json
 
+# 初始化用户组
 def init_group(request):
     try:
         user = request.user
@@ -42,6 +43,7 @@ def init_group(request):
     return JsonResponse({"status": 200, "data": data})
 
 # Create your views here.
+# 用于测试
 def index(request):
     try:
         user = request.user
@@ -68,9 +70,10 @@ def index(request):
 @csrf_exempt
 def task(request):
     # API7 为了防止异常追踪和其他有价值的信息被传回攻击者，如果可以，定义和强制使用统一的API响应格式，包括错误信息；
-    # 统一返回格式json {"status": 405, "data": {}, "msg": "method not allowed"}
+    # API采用统一格式返回
+    # {"status": 405, "data": {}, "msg": "method not allowed"}
     
-    # 只接受POST请求
+    # 只接受POST请求，非POST请求拒绝访问
     if request.method != 'POST':
         # API7 确定API只能被特定HTTP方法访问，其他的HTTP方法访问都应该被禁止（如，POST方法）
         return JsonResponse({"status": 405, "data": {}, "msg": "method not allowed"}, status=405)
@@ -81,7 +84,7 @@ def task(request):
     except json.JSONDecodeError:
         return JsonResponse({"status": 400, "data": {}, "msg": "invalid JSON"}, status=400)
 
-    # 获取当前登录用户，对于授权，你也可以换成token或其他监权方式
+    # 获取当前登录用户，对于授权，你可以换成token或其他的监权方式
     user = request.user
     
     # API5 失效的功能级授权 检查用户是否有权限执行此操作
@@ -136,7 +139,7 @@ def task(request):
         # API 6  仅将客户端可更新的属性列入白名单；
         # API 8  对客户端提供的数据、或其他来自集成系统的数据进行验证、过滤和清理
         if app_user.score < score:
-            # 这是设计的业务逻辑，创建新任务时，消耗用户一定的分数。如果用户的分数不足，则无法创建。
+            # 这是我们设计的业务逻辑，创建新任务时，消耗用户一定的分数。如果用户的分数不足，则无法创建。
             return JsonResponse({"status": 403, "data": {}, "msg": "user doesn't have enough score"}, status=403)
         
         # Create a new task within a transaction
@@ -145,6 +148,7 @@ def task(request):
             app_user.score -= score
             app_user.save()
 
+            # 创建一个新task
             task = Task(
                 name=data.get("name", ""),
                 user_id=user_id,
