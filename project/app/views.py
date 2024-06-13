@@ -70,16 +70,18 @@ def task(request):
     # API7 为了防止异常追踪和其他有价值的信息被传回攻击者，如果可以，定义和强制使用统一的API响应格式，包括错误信息；
     # 统一返回格式json {"status": 405, "data": {}, "msg": "method not allowed"}
     
+    # 只接受POST请求
     if request.method != 'POST':
         # API7 确定API只能被特定HTTP方法访问，其他的HTTP方法访问都应该被禁止（如，POST方法）
         return JsonResponse({"status": 405, "data": {}, "msg": "method not allowed"}, status=405)
     
     try:
+        # 从HTTP的Body中解析json请求数据对象
         data = json.loads(request.body)
     except json.JSONDecodeError:
         return JsonResponse({"status": 400, "data": {}, "msg": "invalid JSON"}, status=400)
 
-    # logined_in user
+    # 获取当前登录用户，对于授权，你也可以换成token或其他监权方式
     user = request.user
     
     # API5 失效的功能级授权 检查用户是否有权限执行此操作
@@ -88,20 +90,21 @@ def task(request):
         return JsonResponse({"status": 403, "data": {}, "msg": "user does not have permission"}, status=403)
 
     
-    
+    # API8 注入 对客户端提供的数据、或其他来自集成系统的数据进行验证、过滤和清理；
     task_id = data.get('task_id', 0)
     
     try:
-        # app user
+        # 根据登录用户，去获取我们app对应的任务用户
         app_user = User.objects.get(username=user.username)
     except User.DoesNotExist:
         return JsonResponse({"status": 404, "data": {}, "msg": "user not found"}, status=404)
     
     user_id = app_user.id
+    # 前端请求的信息，用于创建或更新task
     stage = data.get("stage")
     score = data.get("score")
     
-    print(stage)
+    # API8 注入 对客户端提供的数据、或其他来自集成系统的数据进行验证、过滤和清理；
     if stage is None or score is None:
         return JsonResponse({"status": 400, "data": {}, "msg": "missing stage or score"}, status=400)
     
@@ -112,15 +115,18 @@ def task(request):
     # API 6  仅将客户端可更新的属性列入白名单；
     # API 8  对客户端提供的数据、或其他来自集成系统的数据进行验证、过滤和清理
     if score < 0:
+        # score必须是大于0的数值，不然前端传负值，会对业务数据造成不可预料的影响
         return JsonResponse({"status": 400, "data": {}, "msg": "invalid score"}, status=400)
     
     try:
-        task = Task.objects.get(id=task_id)
-        # Update a exites task
+        # 根据前端传的task_id去判断，是创建新task，还是更新已有的task
+        task = Task.objects.get(id=task_id)        
         if task:
+            # 更新已有的task
             # API 6  仅将客户端可更新的属性列入白名单；
             task.stage = stage
             
+            # 如果是完成task，则给该用户增加相应的积分
             if stage == Task.TaskStage.finished:
                 app_user.credit += score
                 app_user.save()
@@ -130,10 +136,12 @@ def task(request):
         # API 6  仅将客户端可更新的属性列入白名单；
         # API 8  对客户端提供的数据、或其他来自集成系统的数据进行验证、过滤和清理
         if app_user.score < score:
+            # 这是设计的业务逻辑，创建新任务时，消耗用户一定的分数。如果用户的分数不足，则无法创建。
             return JsonResponse({"status": 403, "data": {}, "msg": "user doesn't have enough score"}, status=403)
         
         # Create a new task within a transaction
         with transaction.atomic():
+            # 在事务的原子操作里，对用户的分数进行扣除，并创建一个新任务。
             app_user.score -= score
             app_user.save()
 
