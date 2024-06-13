@@ -2,33 +2,56 @@ A simple project build with Django
 
 
 
+Register our app in Django framework `project/settings.py`
+```
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'app',  // add our app to this line
+]
+```
+
+Usage:
+```
 cd project 
-
+<!-- create superuser -->
 python manage.py createsuperuser
-
+```
 superuser
 admin
 admin
-
+```
+<!-- when you create a new model or update a model's field, make migrate -->
 python manage.py makemigrations app
 
 python manage.py migrate
 
-
+<!-- run server -->
 python manage.py runserver
-
-regist project route in project/urls.py
-
 ```
-http://127.0.0.1:8000/api/test/     
+Regist project route in `project/urls.py`
 ```
-regist api route in project/app/urls.py
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path("api/", include("app.urls")), // add our api route to project
+]
+```
 
+Regist API route in `project/app/urls.py`
+```
+urlpatterns = [    
+    path("task/create-or-update", views.task, name="create-or-update-task"),    
+]
+```
+API url
 ```
 http://127.0.0.1:8000/api/task/create-or-update
 ```
 
- CSRF when request api in postman
 
 ## API 文档
 
