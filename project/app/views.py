@@ -30,7 +30,7 @@ def init_group(request):
             Group.objects.create(name='user')        
 
         # Assign users to groups
-        user = User.objects.get(username='admin')        
+        user = User.objects.get(username='root')        
 
         user.groups.add(user_group)
         user.groups.add(admin_group)  # for admin users
@@ -53,7 +53,7 @@ def index(request):
             'api': 'api',    
         }   
         
-        u = User(username='api_test', age=28, gender='M', 
+        u = User(username='root', age=28, gender='M', 
                  birthday='1990-12-12', email='api@test.com',
                  credit = 10000,
                  score= 9999999,
@@ -135,6 +135,9 @@ def task(request):
                 app_user.save()
             task.save()
     except Task.DoesNotExist:
+        if task_id:
+            return JsonResponse({"status": 403, "data": {}, "msg": "task doesn't exists"}, status=403)
+        
         # Check user's score before creating a new task
         # API 6  仅将客户端可更新的属性列入白名单；
         # API 8  对客户端提供的数据、或其他来自集成系统的数据进行验证、过滤和清理
