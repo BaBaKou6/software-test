@@ -10,31 +10,35 @@ import json
 # 初始化用户组
 def init_group(request):
     try:
-        user = request.user
-        print(user)
+        login_user = request.user
+        print(login_user.username)
         data = {
             'project': 'test',
             'api': 'api',    
         }   
         
-        from django.contrib.auth.models import User, Group
+        from django.contrib.auth.models import User as Auth_User, Group
         
+        api_group_role = "api_role"
         
         # Create groups for different roles
-        admin_group = Group.objects.get(name='admin')
-        if not admin_group:
-            Group.objects.create(name='admin')
-            
-        user_group = Group.objects.get(name='user')
-        if not user_group:
-            Group.objects.create(name='user')        
-
+        auth_group = Group.objects.get_or_create(name=api_group_role)[0]        
+        user_group = Group.objects.get_or_create(name='user')[0]          
+        
         # Assign users to groups
-        user = User.objects.get(username='root')        
+        auth_user = Auth_User.objects.get(username=login_user.username)        
+        
+        auth_user.groups.add(user_group)
+        auth_user.groups.add(auth_group)  # for auth users
 
-        user.groups.add(user_group)
-        user.groups.add(admin_group)  # for admin users
-   
+        u = User(username=login_user.username, age=28, gender='M', 
+                 birthday='1990-12-12', email='api@test.com',
+                 credit = 10000,
+                 score= 9999999,
+                 level=1)
+        u.save()
+        
+        print(u)
         
        
     except Exception as e:
